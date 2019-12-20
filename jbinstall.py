@@ -92,6 +92,37 @@ def create_symlink(root_dir, pretty_name):
 		exit(1)
 
 
+def archive_extract_info(tar):
+	names = tar.getnames()
+
+	root_dir = names[0].split("/")[0]
+	program_name, program_version = root_dir.split("-")
+
+	bin_path = root_dir + "/bin/" + program_name.lower() + ".sh"
+	if bin_path not in names:
+		print(
+			f"jbinstall: Expected a \"{bin_path}\" member in the archive, but it's not present\n" +
+			"jbinstall: Archive does not seem to contain a JetBrains product, exiting", file=sys.stderr)
+		exit(1)
+
+	for name in names:
+		if "../" in name:
+			print(f"jbinstall: Archive contains a dangerous path \"{name}\", refusing to continue", file=sys.stderr)
+			exit(1)
+
+	return root_dir, program_name, program_version
+
+
+def archive_extract_contents(archive_name, archive_object, dest_path):
+	for member in archive_object:
+		try:
+			archive_object.extract(member, dest_path)
+		except (tarfile.TarError, OSError) as ex:
+			member = member.name
+			print(f"jbinstall: Error while extracting file \"{member}\" from archive \"{archive_name}\": {ex}", file=sys.stderr)
+			exit(1)
+
+
 def parse_args():
 	global PROGRAM_VERSION
 
@@ -119,26 +150,16 @@ def parse_args():
 def main():
 	archive_name = parse_args()
 	try:
-		tar = tarfile.open(archive_name, 'r:gz')
+		archive_obj = tarfile.open(archive_name, 'r:gz')
 	except tarfile.TarError as ex:
 		print(f"jbinstall: Error while opening archive \"{archive_name}\": {ex}", file=sys.stderr)
 		exit(1)
 
-	member = tar.next()
-	rootdir = member.name.split("/")[0]
-	program_name, program_version = rootdir.split("-")
+	root_dir, program_name, program_version = archive_extract_info(archive_obj)
+	archive_extract_contents(archive_name, archive_obj, "/opt")
 
-	while member is not None:
-		try:
-			tar.extract(member, "/opt/")
-			member = tar.next()
-		except (tarfile.TarError, OSError) as ex:
-			member = member.name
-			print(f"jbinstall: Error while extracting file \"{member}\" from archive \"{archive_name}\": {ex}", file=sys.stderr)
-			exit(1)
-
-	write_desktop_file(rootdir, program_name, program_version)
-	create_symlink(rootdir, program_name)
+	write_desktop_file(root_dir, program_name, program_version)
+	create_symlink(root_dir, program_name)
 
 
 if __name__ == "__main__":
