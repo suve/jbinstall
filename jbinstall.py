@@ -22,18 +22,32 @@ import sys
 import tarfile
 
 
+PROGRAM_VERSION = "1.0"
+
+
+def print_help():
+	print(f"""jbinstall - an unofficial installer for JetBrains products
+Usage:
+  jbinstall [OPTIONS] ARCHIVE.TAR.GZ
+Supported options:
+  --help
+    Print this help message and exit.
+  --version
+    Print program version information and exit.
+""", end="")
+
+
 def generate_desktop_file(name, executable, icon):
-	return f"""
-		[Desktop Entry]
-		Type=Application
-		Version=1.0
-		Name={name}
-		Exec={executable} %F
-		Icon={icon}
-		Terminal=false
-		Categories=Development;IDE;
-		StartupNotify=true
-		"""
+	return f"""[Desktop Entry]
+Type=Application
+Version=1.0
+Name={name}
+Exec={executable} %F
+Icon={icon}
+Terminal=false
+Categories=Development;IDE;
+StartupNotify=true
+"""
 
 
 def write_desktop_file(root_dir, pretty_name, version):
@@ -65,17 +79,32 @@ def write_desktop_file(root_dir, pretty_name, version):
 		exit(1)
 
 
-def main():
+def parse_args():
+	global PROGRAM_VERSION
+
 	argc = len(sys.argv)
 	if argc < 2:
-		print("Usage: jbinstall FILE.TAR.GZ", file=sys.stderr)
+		print("Usage: jbinstall FILE.TAR.GZ\nAlternatively, run \"jbinstall --help\" for more info.", file=sys.stderr)
 		exit(1)
+
+	if sys.argv[1] == "--help":
+		print_help()
+		exit(0)
+
+	if sys.argv[1] == "--version":
+		print(f"jbinstall v.{PROGRAM_VERSION} by suve")
+		exit(0)
 
 	archive_name = sys.argv[1]
 	if not os.path.exists(archive_name):
 		print(f"jbinstall: File \"{archive_name}\" does not exist", file=sys.stderr)
 		exit(1)
 
+	return archive_name
+
+
+def main():
+	archive_name = parse_args()
 	try:
 		tar = tarfile.open(archive_name, 'r:gz')
 	except tarfile.TarError as ex:
