@@ -79,6 +79,19 @@ def write_desktop_file(root_dir, pretty_name, version):
 		exit(1)
 
 
+def create_symlink(root_dir, pretty_name):
+	name = pretty_name.lower()
+	exepath = "/opt/" + root_dir + "/bin/" + name + ".sh"
+
+	linkpath = "/usr/local/bin/" + name
+
+	try:
+		os.symlink(exepath, linkpath)
+	except OSError as ex:
+		print(f"jbinstall: Failed to create symbolic link \"{linkpath}\": {ex}", file=sys.stderr)
+		exit(1)
+
+
 def parse_args():
 	global PROGRAM_VERSION
 
@@ -125,6 +138,7 @@ def main():
 			exit(1)
 
 	write_desktop_file(rootdir, program_name, program_version)
+	create_symlink(rootdir, program_name)
 
 
 if __name__ == "__main__":
