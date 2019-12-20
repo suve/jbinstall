@@ -11,8 +11,13 @@ and sets up `.desktop` files (Start Menu entries) inside `/usr/local/share/appli
 
 ## Usage
 ```
-jbinstall FILE.TAR.GZ
+jbinstall [OPTIONS] FILE.TAR.GZ
 ```
+Program options:
+- `--help`: Print a help message and exit.
+- `--verbose`: Print some information about what the program is doing.
+- `--version`: Print version information and exit.
+
 Since **jbinstall** wants to put files inside `/opt` and `/usr`, you will need to run it as root.
 
 

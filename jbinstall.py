@@ -24,6 +24,8 @@ import tarfile
 
 PROGRAM_VERSION = "1.0"
 
+Settings = dict()
+
 
 def print_help():
 	print(f"""jbinstall - an unofficial installer for JetBrains products
@@ -32,9 +34,58 @@ Usage:
 Supported options:
   --help
     Print this help message and exit.
+  --verbose
+    Print extra information while running.
   --version
     Print program version information and exit.
 """, end="")
+
+
+def parse_args():
+	global PROGRAM_VERSION
+	global Settings
+
+	archive_name = None
+	verbose = False
+
+	argc = len(sys.argv)
+	if argc < 2:
+		print("Usage: jbinstall FILE.TAR.GZ\nAlternatively, run \"jbinstall --help\" for more info.", file=sys.stderr)
+		exit(1)
+
+	a = 1
+	while a < argc:
+		arg = sys.argv[a]
+
+		if arg.startswith("--"):
+			if arg == "--help":
+				print_help()
+				exit(0)
+			elif arg == "--verbose":
+				verbose = True
+				a += 1
+			elif arg == "--version":
+				print(f"jbinstall v.{PROGRAM_VERSION} by suve")
+				exit(0)
+			else:
+				print(f"jbinstall: Unknown option \"{arg}\"", file=sys.stderr)
+				exit(1)
+		elif archive_name is not None:
+			print("jbinstall: Cannot provide more than one archive name at a time", file=sys.stderr)
+			exit(1)
+		else:
+			archive_name = arg
+
+	if archive_name is None:
+		print("jbinstall: You must provide an archive to install", file=sys.stderr)
+		exit(1)
+
+	if not os.path.exists(archive_name):
+		print(f"jbinstall: File \"{archive_name}\" does not exist", file=sys.stderr)
+		exit(1)
+
+	Settings["archive_name"] = archive_name
+	Settings["verbose"] = verbose
 
 
 def mkdir_p(full_path):
@@ -131,32 +182,10 @@ def archive_extract_contents(archive_name, archive_object, dest_path):
 			exit(1)
 
 
-def parse_args():
-	global PROGRAM_VERSION
-
-	argc = len(sys.argv)
-	if argc < 2:
-		print("Usage: jbinstall FILE.TAR.GZ\nAlternatively, run \"jbinstall --help\" for more info.", file=sys.stderr)
-		exit(1)
-
-	if sys.argv[1] == "--help":
-		print_help()
-		exit(0)
-
-	if sys.argv[1] == "--version":
-		print(f"jbinstall v.{PROGRAM_VERSION} by suve")
-		exit(0)
-
-	archive_name = sys.argv[1]
-	if not os.path.exists(archive_name):
-		print(f"jbinstall: File \"{archive_name}\" does not exist", file=sys.stderr)
-		exit(1)
-
-	return archive_name
-
-
 def main():
-	archive_name = parse_args()
+	parse_args()
+
+	archive_name = Settings["archive_name"]
 	try:
 		archive_obj = tarfile.open(archive_name, 'r:gz')
 	except tarfile.TarError as ex:
