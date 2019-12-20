@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 #
-# jbinstall - an installer for JetBrains products
+# jbinstall - an unofficial installer for JetBrains products
 # Copyright (C) 2019 Artur "suve" Iwicki
 #
 # This program is free software; you can redistribute it and/or modify it
@@ -37,6 +37,21 @@ Supported options:
 """, end="")
 
 
+def mkdir_p(full_path):
+	components = full_path.split("/")
+	components.pop(0)  # Don't check if "/" exists
+
+	path = "/"
+	for component in components:
+		path = path + component
+		if not os.path.exists(path):
+			try:
+				os.mkdir(path)
+			except OSError as ex:
+				print(f"jbinstall: Error while creating directory \"{path}\": {ex}", file=sys.stderr)
+				exit(1)
+
+
 def generate_desktop_file(name, executable, icon):
 	return f"""[Desktop Entry]
 Type=Application
@@ -59,17 +74,9 @@ def write_desktop_file(root_dir, pretty_name, version):
 		icon=exepath + ".png",
 		name=pretty_name + " " + version)
 
-	path = ""
-	try:
-		for dir in ["/usr", "/local", "/share", "/applications"]:
-			path = path + dir
-			if not os.path.exists(path):
-				os.mkdir(path)
-	except OSError as ex:
-		print(f"jbinstall: Error while creating directory \"{path}\": {ex}", file=sys.stderr)
-		exit(1)
+	mkdir_p("/usr/local/share/applications")
 
-	path = path + "/" + name + ".desktop"
+	path = "/usr/local/share/applications/" + name + ".desktop"
 	try:
 		file = open(path, "w")
 		file.write(content)
@@ -83,6 +90,7 @@ def create_symlink(root_dir, pretty_name):
 	name = pretty_name.lower()
 	exepath = "/opt/" + root_dir + "/bin/" + name + ".sh"
 
+	mkdir_p("/usr/local/bin")
 	linkpath = "/usr/local/bin/" + name
 
 	try:

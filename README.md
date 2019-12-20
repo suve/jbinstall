@@ -1,10 +1,12 @@
 # jbinstall
-A tool for Linux users that installs a selected JetBrains product inside `/opt` and sets up `.desktop` files (Start Menu entries) inside `/usr/local/share/applications`.
+A tool for Linux users that installs a selected JetBrains product inside `/opt`, adds a symlink inside `/usr/local/bin`
+and sets up `.desktop` files (Start Menu entries) inside `/usr/local/share/applications`.
 
 
 ## But why?
 - A single, system-wide installation saves space compared to multiple users each having their own copy.
 - `/opt` is (usually) writable only by root - less risk of some malignant software (or user) corrupting the files.
+- Having a symlink inside `/usr/local/bin` allows to start a program from a launcher or terminal.
 
 
 ## Usage
