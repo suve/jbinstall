@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # jbinstall - an unofficial installer for JetBrains products
-# Copyright (C) 2019 Artur "suve" Iwicki
+# Copyright (C) 2019-2020 Artur "suve" Iwicki
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License, as published
@@ -92,9 +92,9 @@ def mkdir_p(full_path):
 	components = full_path.split("/")
 	components.pop(0)  # Don't check if "/" exists
 
-	path = "/"
+	path = ""
 	for component in components:
-		path = path + component
+		path = path + "/" + component
 		if not os.path.exists(path):
 			try:
 				os.mkdir(path)
