@@ -157,6 +157,9 @@ def archive_extract_info(tar):
 	root_dir = names[0].split("/")[0]
 	program_name, program_version = root_dir.split("-")
 
+	if program_name.startswith("JetBrains "):
+		program_name = program_name[len("JetBrains "):]
+
 	bin_path = root_dir + "/bin/" + program_name.lower() + ".sh"
 	if bin_path not in names:
 		print(
@@ -182,6 +185,20 @@ def archive_extract_contents(archive_name, archive_object, dest_path):
 			exit(1)
 
 
+def rename_rootdir_if_needed(root_dir):
+	if root_dir.startswith("JetBrains "):
+		old_root_dir = root_dir
+		root_dir = root_dir[len("JetBrains "):]
+
+		try:
+			os.rename("/opt/" + old_root_dir, "/opt/" + root_dir)
+		except OSError as ex:
+			print(f"jbinstall: Failed to rename directory \"/opt/{old_root_dir}\" to \"/opt/{root_dir}\": {ex}", file=sys.stderr)
+			root_dir = old_root_dir
+
+	return root_dir
+
+
 def main():
 	parse_args()
 
@@ -194,6 +211,8 @@ def main():
 
 	root_dir, program_name, program_version = archive_extract_info(archive_obj)
 	archive_extract_contents(archive_name, archive_obj, "/opt")
+
+	root_dir = rename_rootdir_if_needed(root_dir)
 
 	write_desktop_file(root_dir, program_name, program_version)
 	create_symlink(root_dir, program_name)
