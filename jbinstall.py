@@ -56,6 +56,7 @@ def parse_args():
 	a = 1
 	while a < argc:
 		arg = sys.argv[a]
+		a += 1
 
 		if arg.startswith("--"):
 			if arg == "--help":
@@ -63,7 +64,6 @@ def parse_args():
 				exit(0)
 			elif arg == "--verbose":
 				verbose = True
-				a += 1
 			elif arg == "--version":
 				print(f"jbinstall v.{PROGRAM_VERSION} by suve")
 				exit(0)
