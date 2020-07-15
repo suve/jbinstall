@@ -144,6 +144,13 @@ def create_symlink(root_dir, pretty_name):
 	mkdir_p("/usr/local/bin")
 	linkpath = "/usr/local/bin/" + name
 
+	if os.path.lexists(linkpath):
+		try:
+			os.unlink(linkpath)
+		except OSError as ex:
+			print(f"jbinstall: Failed to remove existing symbolic link \"{linkpath}\": {ex}", file=sys.stderr)
+			exit(1)
+
 	try:
 		os.symlink(exepath, linkpath)
 	except OSError as ex:
