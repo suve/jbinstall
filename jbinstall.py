@@ -118,16 +118,19 @@ StartupNotify=true
 
 def write_desktop_file(root_dir, pretty_name, version):
 	name = pretty_name.lower()
-	exepath = "/opt/" + root_dir + "/bin/" + name
+	path = "/usr/local/share/applications/" + name + ".desktop"
 
+	global Settings
+	if Settings["verbose"]:
+		print(f"Creating desktop file at \"{path}\"")
+
+	exepath = "/opt/" + root_dir + "/bin/" + name
 	content = generate_desktop_file(
 		executable=exepath + ".sh",
 		icon=exepath + ".png",
 		name=pretty_name + " " + version)
 
-	mkdir_p("/usr/local/share/applications")
-
-	path = "/usr/local/share/applications/" + name + ".desktop"
+	mkdir_p(os.path.dirname(path))
 	try:
 		file = open(path, "w")
 		file.write(content)
@@ -140,9 +143,11 @@ def write_desktop_file(root_dir, pretty_name, version):
 def create_symlink(root_dir, pretty_name):
 	name = pretty_name.lower()
 	exepath = "/opt/" + root_dir + "/bin/" + name + ".sh"
-
-	mkdir_p("/usr/local/bin")
 	linkpath = "/usr/local/bin/" + name
+
+	global Settings
+	if Settings["verbose"]:
+		print(f"Creating symbolic link to \"{exepath}\" at \"{linkpath}\"")
 
 	if os.path.lexists(linkpath):
 		try:
@@ -151,6 +156,7 @@ def create_symlink(root_dir, pretty_name):
 			print(f"jbinstall: Failed to remove existing symbolic link \"{linkpath}\": {ex}", file=sys.stderr)
 			exit(1)
 
+	mkdir_p(os.path.dirname(linkpath))
 	try:
 		os.symlink(exepath, linkpath)
 	except OSError as ex:
@@ -166,6 +172,10 @@ def archive_extract_info(tar):
 
 	if program_name.startswith("JetBrains "):
 		program_name = program_name[len("JetBrains "):]
+
+	global Settings
+	if Settings["verbose"]:
+		print(f"Recognized program as \"{program_name}\", version \"{program_version}\"")
 
 	bin_path = root_dir + "/bin/" + program_name.lower() + ".sh"
 	if bin_path not in names:
@@ -183,6 +193,12 @@ def archive_extract_info(tar):
 
 
 def archive_extract_contents(archive_name, archive_object, dest_path):
+	global Settings
+	if Settings["verbose"]:
+		names = archive_object.getnames()
+		root_dir = names[0].split("/")[0]
+		print(f"Extracting archive members to \"{dest_path}/{root_dir}/\"")
+
 	for member in archive_object:
 		try:
 			archive_object.extract(member, dest_path)
@@ -196,6 +212,10 @@ def rename_rootdir_if_needed(root_dir):
 	if root_dir.startswith("JetBrains "):
 		old_root_dir = root_dir
 		root_dir = root_dir[len("JetBrains "):]
+
+		global Settings
+		if Settings["verbose"]:
+			print(f"Renaming directory \"/opt/{old_root_dir}/\" to \"/opt/{root_dir}/\"")
 
 		try:
 			os.rename("/opt/" + old_root_dir, "/opt/" + root_dir)
