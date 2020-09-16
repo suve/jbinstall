@@ -164,11 +164,16 @@ def create_symlink(root_dir, pretty_name):
 		exit(1)
 
 
+def parse_root_dir_name(root_dir):
+	parts = root_dir.split('-')
+	return parts[0], parts[-1]
+
+
 def archive_extract_info(tar):
 	names = tar.getnames()
 
 	root_dir = names[0].split("/")[0]
-	program_name, program_version = root_dir.split("-")
+	program_name, program_version = parse_root_dir_name(root_dir)
 
 	if program_name.startswith("JetBrains "):
 		program_name = program_name[len("JetBrains "):]
