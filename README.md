@@ -15,6 +15,7 @@ jbinstall [OPTIONS] FILE.TAR.GZ
 ```
 Program options:
 - `--help`: Print a help message and exit.
+- `--remove-old`: Detect and remove old versions of the installed product.
 - `--verbose`: Print some information about what the program is doing.
 - `--version`: Print version information and exit.
 

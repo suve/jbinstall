@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # jbinstall - an unofficial installer for JetBrains products
-# Copyright (C) 2019-2020 Artur "suve" Iwicki
+# Copyright (C) 2019-2021 Artur "suve" Iwicki
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License, as published
@@ -18,6 +18,7 @@
 # this program (LICENCE.txt). If not, see <https://www.gnu.org/licenses/>.
 #
 import os
+import subprocess
 import sys
 import tarfile
 
@@ -34,6 +35,8 @@ Usage:
 Supported options:
   --help
     Print this help message and exit.
+  --remove-old
+    Detect and remove old versions of the installed product.
   --verbose
     Print extra information while running.
   --version
@@ -46,6 +49,7 @@ def parse_args():
 	global Settings
 
 	archive_name = None
+	remove_old = False
 	verbose = False
 
 	argc = len(sys.argv)
@@ -62,6 +66,8 @@ def parse_args():
 			if arg == "--help":
 				print_help()
 				exit(0)
+			elif arg == "--remove-old":
+				remove_old = True
 			elif arg == "--verbose":
 				verbose = True
 			elif arg == "--version":
@@ -85,6 +91,7 @@ def parse_args():
 		exit(1)
 
 	Settings["archive_name"] = archive_name
+	Settings["remove_old"] = remove_old
 	Settings["verbose"] = verbose
 
 
@@ -231,6 +238,32 @@ def rename_rootdir_if_needed(root_dir):
 	return root_dir
 
 
+def remove_old_versions(program_name, program_version):
+	global Settings
+
+	prefix = f"{program_name}-"
+	fullname = f"{program_name}-{program_version}"
+
+	for entry_name in os.listdir("/opt"):
+		entry_path = f"/opt/{entry_name}"
+
+		if not os.path.isdir(entry_path):
+			continue
+
+		if not entry_name.startswith(prefix):
+			continue
+
+		if entry_name == fullname:
+			continue
+
+		args = ["rm", "-r"]
+		if Settings["verbose"]:
+			args.append("-v")
+
+		args.append(entry_path)
+		subprocess.run(args)
+
+
 def main():
 	parse_args()
 
@@ -248,6 +281,9 @@ def main():
 
 	write_desktop_file(root_dir, program_name, program_version)
 	create_symlink(root_dir, program_name)
+
+	if Settings["remove_old"]:
+		remove_old_versions(program_name, program_version)
 
 
 if __name__ == "__main__":
