@@ -35,6 +35,8 @@ Usage:
 Supported options:
   --help
     Print this help message and exit.
+  --interactive
+    Prompt for confirmation before each step.
   --remove-old
     Detect and remove old versions of the installed product.
   --verbose
@@ -49,6 +51,7 @@ def parse_args():
 	global Settings
 
 	archive_name = None
+	interactive = False
 	remove_old = False
 	verbose = False
 
@@ -66,6 +69,8 @@ def parse_args():
 			if arg == "--help":
 				print_help()
 				exit(0)
+			elif arg == "--interactive":
+				interactive = True
 			elif arg == "--remove-old":
 				remove_old = True
 			elif arg == "--verbose":
@@ -91,6 +96,7 @@ def parse_args():
 		exit(1)
 
 	Settings["archive_name"] = archive_name
+	Settings["interactive"] = interactive
 	Settings["remove_old"] = remove_old
 	Settings["verbose"] = verbose
 
@@ -256,12 +262,29 @@ def remove_old_versions(program_name, program_version):
 		if entry_name == fullname:
 			continue
 
+		if not confirm(f"Remove \"{entry_path}\""):
+			continue
+
 		args = ["rm", "-r"]
 		if Settings["verbose"]:
 			args.append("-v")
 
 		args.append(entry_path)
 		subprocess.run(args)
+
+
+def confirm(action):
+	global Settings
+	if not Settings["interactive"]:
+		return True
+
+	prompt = f"{action}? [Y/N]: "
+	while True:
+		value = input(prompt)
+		if value == "Y" or value == "y":
+			return True
+		if value == "N" or value == "n":
+			return False
 
 
 def main():
@@ -275,12 +298,15 @@ def main():
 		exit(1)
 
 	root_dir, program_name, program_version = archive_extract_info(archive_obj)
-	archive_extract_contents(archive_name, archive_obj, "/opt")
 
-	root_dir = rename_rootdir_if_needed(root_dir)
+	if confirm(f"Extract \"{archive_name}\" to \"/opt/{program_name}-{program_version}\""):
+		archive_extract_contents(archive_name, archive_obj, "/opt")
+		root_dir = rename_rootdir_if_needed(root_dir)
 
-	write_desktop_file(root_dir, program_name, program_version)
-	create_symlink(root_dir, program_name)
+	if confirm(f"Create a desktop file at \"/usr/local/share/applications/{program_name}.desktop\""):
+		write_desktop_file(root_dir, program_name, program_version)
+	if confirm(f"Create a symlink at \"/usr/local/bin/{program_name}\""):
+		create_symlink(root_dir, program_name)
 
 	if Settings["remove_old"]:
 		remove_old_versions(program_name, program_version)
